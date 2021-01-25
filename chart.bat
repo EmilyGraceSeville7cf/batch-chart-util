@@ -119,6 +119,15 @@ exit /b %ec_success%
     echo    c^|clear - clears screen
     echo    h^|help - writes help
     echo.
+    echo Error codes:
+    echo    - 0 - Success
+    echo    - 10 - bc utility not found to perform calculations with float numbers.
+    echo    - 20 - Unexpected value instead of nonnegative number.
+    echo    - 30 - Missing opening curly brace ^({^).
+    echo    - 31 - Missing closing curly brace ^(}^).
+    echo    - 40 - Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 50 - Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo.
     echo Examples:
     echo    - chart --help
     echo    - chart 1 5 3
@@ -352,8 +361,8 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :skip_style_block
-    set /a "ssb_ec_missing_opening_curly_brace=31"
-    set /a "ssb_ec_missing_closing_curly_brace=32"
+    set /a "ssb_ec_missing_opening_curly_brace=30"
+    set /a "ssb_ec_missing_closing_curly_brace=31"
 
     set "ssb_em_missing_opening_curly_brace=Missing opening curly brace ^({^)."
     set "ssb_em_missing_closing_curly_brace=Missing closing curly brace ^(}^)."
@@ -498,7 +507,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :name_to_foreground_color_code
-    set /a "ntfcc_ec_wrong_color_name=41"
+    set /a "ntfcc_ec_wrong_color_name=40"
 
     set "ntfcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
@@ -519,7 +528,7 @@ exit /b %ec_success%
 exit /b %ntfcc_ec_wrong_color_name%
 
 :name_to_background_color_code
-    set /a "ntbcc_ec_wrong_color_name=51"
+    set /a "ntbcc_ec_wrong_color_name=50"
 
     set "ntbcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
