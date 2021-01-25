@@ -297,7 +297,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :parse_chart_data
-    set /a "pcd_ec_unexpected_value=1"
+    set /a "pcd_ec_unexpected_value=20"
 
     set "pcd_em_unexpected_value=Unexpected value instead of nonnegative number."
 
@@ -352,8 +352,8 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :skip_style_block
-    set /a "ssb_ec_missing_opening_curly_brace=1"
-    set /a "ssb_ec_missing_closing_curly_brace=1"
+    set /a "ssb_ec_missing_opening_curly_brace=31"
+    set /a "ssb_ec_missing_closing_curly_brace=32"
 
     set "ssb_em_missing_opening_curly_brace=Missing opening curly brace ^({^)."
     set "ssb_em_missing_closing_curly_brace=Missing closing curly brace ^(}^)."
@@ -498,7 +498,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :name_to_foreground_color_code
-    set /a "ntfcc_ec_wrong_color_name=1"
+    set /a "ntfcc_ec_wrong_color_name=41"
 
     set "ntfcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
@@ -519,7 +519,7 @@ exit /b %ec_success%
 exit /b %ntfcc_ec_wrong_color_name%
 
 :name_to_background_color_code
-    set /a "ntbcc_ec_wrong_color_name=1"
+    set /a "ntbcc_ec_wrong_color_name=51"
 
     set "ntbcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
