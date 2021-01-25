@@ -28,8 +28,8 @@ Interactive mode commands:
 - `0` - Success
 - `10` - bc utility not found to perform calculations with float numbers.
 - `20` - Unexpected value instead of nonnegative number.
-- `30` - Missing opening curly brace ^({^).
-- `31` - Missing closing curly brace ^(}^).
+- `30` - Missing opening curly brace ({).
+- `31` - Missing closing curly brace (}).
 - `40` - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
 - `50` - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
 
