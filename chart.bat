@@ -112,8 +112,6 @@ exit /b %ec_success%
     echo    -ic^|--item-char - specifies chart item char used to display it
     echo    -ipc^|--item-placeholder-char - specifies chart item placeholder char used to display it
     echo.
-    echo If string is specified before some option then it is ignored.
-    echo.
     echo Interactive mode commands:
     echo    q^|quit - exits
     echo    c^|clear - clears screen
@@ -125,14 +123,13 @@ exit /b %ec_success%
     echo    - 20 - Unexpected value instead of nonnegative number.
     echo    - 30 - Missing opening curly brace ^({^).
     echo    - 31 - Missing closing curly brace ^(}^).
-    echo    - 40 - Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
-    echo    - 50 - Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 40 - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 50 - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
     echo.
     echo Examples:
     echo    - chart --help
     echo    - chart 1 5 3
-    echo    - chart 1 5 3 --help (--help option is ignored)
-    echo    - chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreground blue } --help (--help option is ignored)
+    echo    - chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreground blue }
 exit /b %ec_success%
 
 :version
@@ -509,7 +506,7 @@ exit /b %ec_success%
 :name_to_foreground_color_code
     set /a "ntfcc_ec_wrong_color_name=40"
 
-    set "ntfcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
+    set "ntfcc_em_wrong_color_name=Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
     set "ntfcc_variable_name=%~1"
     set "ntfcc_color_name=%~2"
@@ -530,7 +527,7 @@ exit /b %ntfcc_ec_wrong_color_name%
 :name_to_background_color_code
     set /a "ntbcc_ec_wrong_color_name=50"
 
-    set "ntbcc_em_wrong_color_name=Unexpected color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
+    set "ntbcc_em_wrong_color_name=Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
     set "ntbcc_variable_name=%~1"
     set "ntbcc_color_name=%~2"
