@@ -5,6 +5,8 @@ call :init
 set /a "init_error_level=%errorlevel%"
 if %init_error_level% gtr 0 exit /b %init_error_level%
 
+call :clear_arguments args
+
 set /a "i=0"
 :copy_options
     set "option=%~1"
@@ -14,6 +16,10 @@ set /a "i=0"
         set /a "i+=1"
         goto copy_options
     )
+
+call :expand_sugar_options args
+set /a "temp_error_level=%errorlevel%"
+if %temp_error_level% gtr 0 exit /b %temp_error_level%
 
 set /a "i=0"
 :main_loop
@@ -77,6 +83,7 @@ set /a "i=0"
     set /a "false=1"
 
     set "prompt=>>> "
+    set "number_regex=^[0-9][0-9]*$"
 
     set /a "default_width=10"
     set /a "width=%default_width%"
@@ -154,6 +161,7 @@ exit /b %ec_success%
         if "%i_command: =%" == "" goto interactive_loop
         
         call :to_array i_args %i_command%
+
         set "i_first=%i_args[0]%"
         
         set "i_comment_regex=^#.*$"
@@ -187,6 +195,10 @@ exit /b %ec_success%
             call :help
             goto interactive_loop
         )
+
+        call :expand_sugar_options i_args
+        set /a "i_temp_error_level=%errorlevel%"
+        if %i_temp_error_level% gtr 0 goto interactive_loop
 
         set "i_previous_command=%i_command%"
 
@@ -269,6 +281,151 @@ exit /b %ec_success%
         )
 exit /b %ec_success%
 
+:expand_sugar_options
+    set /a "eso_ec_unexpected_value=20"
+
+    set "eso_em_unexpected_value=Unexpected value instead of nonnegative number."
+
+    set "eso_args_array_name=%~1"
+
+    set "eso_temp_foreground_value="
+    set "eso_temp_background_value="
+    set "eso_temp_char_value="
+    set "eso_temp_placeholder_char_value="
+
+    set /a "eso_i=0"
+    :eso_expand_options_loop
+        set /a "eso_j=%eso_i% + 1"
+
+        if not defined %eso_args_array_name%[%eso_i%] exit /b %ec_success%
+
+        call set "eso_option=%%%eso_args_array_name%[%eso_i%]%%"
+        call set "eso_value=%%%eso_args_array_name%[%eso_j%]%%"
+
+        set /a "eso_is_foreground=%false%"
+        if "%eso_option%" == "-f" set /a "eso_is_foreground=%true%"
+        if "%eso_option%" == "--foreground" set /a "eso_is_foreground=%true%"
+
+        if "%eso_is_foreground%" == "%true%" goto eso_if_eso_is_foreground_equal_to_true
+
+        set /a "eso_is_background=%false%"
+        if "%eso_option%" == "-b" set /a "eso_is_background=%true%"
+        if "%eso_option%" == "--background" set /a "eso_is_background=%true%"
+
+        if "%eso_is_background%" == "%true%" goto eso_if_eso_is_background_equal_to_true
+
+        set /a "eso_is_char=%false%"
+        if "%eso_option%" == "-c" set /a "eso_is_char=%true%"
+        if "%eso_option%" == "--char" set /a "eso_is_char=%true%"
+
+        if "%eso_is_char%" == "%true%" (
+            set "eso_temp_char_value=%eso_value:~0,1%"
+
+            call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+            call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+            goto eso_expand_options_loop
+        )
+
+        set /a "eso_is_placeholder_char=%false%"
+        if "%eso_option%" == "-pc" set /a "eso_is_placeholder_char=%true%"
+        if "%eso_option%" == "--placeholder-char" set /a "eso_is_placeholder_char=%true%"
+
+        if "%eso_is_placeholder_char%" == "%true%" (
+            set "eso_temp_placeholder_char_value=%eso_value:~0,1%"
+
+            call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+            call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+            goto eso_expand_options_loop
+        )
+
+        set /a "eso_is_skippable_option_with_value=%false%"
+        if "%eso_option%" == "-w" set /a "eso_is_skippable_option_with_value=%true%"
+        if "%eso_option%" == "--width" set /a "eso_is_skippable_option_with_value=%true%"
+
+        if "%eso_is_skippable_option_with_value%" == "%true%" (
+            set /a "eso_i+=2"
+            goto eso_expand_options_loop
+        )
+
+        set /a "eso_is_skippable_option_without_value=%false%"
+        if "%eso_option%" == "-h" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "--help" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "-v" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "--version" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "-i" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "--interactive" set /a "eso_is_skippable_option_without_value=%true%"
+
+        if "%eso_is_skippable_option_without_value%" == "%true%" (
+            set /a "eso_i+=1"
+            goto eso_expand_options_loop
+        )
+
+        call set "eso_value=%%%eso_args_array_name%[%eso_i%]%%"
+        call set "eso_next_argument=%%%eso_args_array_name%[%eso_j%]%%"
+
+        echo %eso_value%| findstr /r "%number_regex%" 2> nul > nul || (
+            echo %eso_em_unexpected_value%
+            exit /b %eso_ec_unexpected_value%
+        )
+
+        if not "%eso_next_argument%" == "{" (
+            call :insert_array_item "%eso_args_array_name%" "}" "%eso_j%"
+            call :insert_array_item "%eso_args_array_name%" "{" "%eso_j%"
+        )
+
+        set /a "eso_i+=2"
+
+        if defined eso_temp_foreground_value (
+            call :insert_array_item "%eso_args_array_name%" "%eso_temp_foreground_value%" "%eso_i%"
+            call :insert_array_item "%eso_args_array_name%" "--item-foreground" "%eso_i%"
+            set /a "eso_i+=2"
+        )
+        if defined eso_temp_background_value (
+            call :insert_array_item "%eso_args_array_name%" "%eso_temp_background_value%" "%eso_i%"
+            call :insert_array_item "%eso_args_array_name%" "--item-background" "%eso_i%"
+            set /a "eso_i+=2"
+        )
+        if defined eso_temp_char_value (
+            call :insert_array_item "%eso_args_array_name%" "%eso_temp_char_value%" "%eso_i%"
+            call :insert_array_item "%eso_args_array_name%" "--item-char" "%eso_i%"
+            set /a "eso_i+=2"
+        )
+        if defined eso_temp_placeholder_char_value (
+            call :insert_array_item "%eso_args_array_name%" "%eso_temp_placeholder_char_value%" "%eso_i%"
+            call :insert_array_item "%eso_args_array_name%" "--item-placeholder-char" "%eso_i%"
+            set /a "eso_i+=2"
+        )
+
+        :eso_move_to_closing_brace
+            call set "eso_argument=%%%eso_args_array_name%[%eso_i%]%%"
+            if not defined eso_argument exit /b %ec_success%
+            if not "%eso_argument%" == "}" (
+                set /a "eso_i+=1"
+                goto eso_move_to_closing_brace
+            )
+        
+        set /a "eso_i+=1"
+        goto eso_expand_options_loop
+exit /b %ec_success%
+
+:eso_if_eso_is_foreground_equal_to_true
+    call :to_foreground_color_code eso_temp_foreground_value "%eso_value%"
+    set /a "eso_temp_errorlevel=%errorlevel%"
+    if %eso_temp_errorlevel% gtr 0 exit /b %eso_temp_errorlevel%
+
+    call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+    call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+    goto eso_expand_options_loop
+
+:eso_if_eso_is_background_equal_to_true
+    call :to_background_color_code eso_temp_background_value "%eso_value%"
+    set /a "eso_temp_errorlevel=%errorlevel%"
+    if %eso_temp_errorlevel% gtr 0 exit /b %eso_temp_errorlevel%
+
+    call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+    call :remove_array_item "%eso_args_array_name%" "%eso_i%"
+    goto eso_expand_options_loop
+
 :try_draw_chart
     set "tdc_data_value_array_name=%~1"
     set "tdc_data_color_array_name=%~2"
@@ -323,8 +480,7 @@ exit /b %ec_success%
 
         if not defined %pcd_args_array_name%[%pcd_i%] exit /b %ec_success%
 
-        set "pcd_value_regex=^[0-9][0-9]*$"
-        echo %pcd_value%| findstr /r "%pcd_value_regex%" 2> nul > nul || (
+        echo %pcd_value%| findstr /r "%number_regex%" 2> nul > nul || (
             echo %pcd_em_unexpected_value%
             exit /b %pcd_ec_unexpected_value%
         )
@@ -477,8 +633,7 @@ exit /b %ec_success%
     set "tfcc_variable_name=%~1"
     set "tfcc_color=%~2"
 
-    set "tfcc_number_regex=^[0-9][0-9]*$"
-    echo %tfcc_color%| findstr /r "%tfcc_number_regex%" 2> nul > nul && (
+    echo %tfcc_color%| findstr /r "%number_regex%" 2> nul > nul && (
         set "%tfcc_variable_name%=%tfcc_color%"
         exit /b %ec_success%
     )
@@ -492,8 +647,7 @@ exit /b %ec_success%
     set "tbcc_variable_name=%~1"
     set "tbcc_color=%~2"
 
-    set "tbcc_number_regex=^[0-9][0-9]*$"
-    echo %tbcc_color%| findstr /r "%tbcc_number_regex%" 2> nul > nul && (
+    echo %tbcc_color%| findstr /r "%number_regex%" 2> nul > nul && (
         set "%tbcc_variable_name%=%tbcc_color%"
         exit /b %ec_success%
     )
@@ -564,6 +718,50 @@ exit /b %ntbcc_ec_wrong_color_name%
         if %fm_item% gtr %fm_max% set /a "fm_max=%fm_item%"
         set /a "fm_i+=1"
         goto fm_max_search_loop
+exit /b %ec_success%
+
+:insert_array_item
+    set "iai_array_name=%~1"
+    set "iai_item_value=%~2"
+    set /a "iai_item_index=%~3"
+
+    set /a "iai_i=%iai_item_index%"
+    :iai_moving_to_last_item
+        set "iai_item_name=%iai_array_name%[%iai_i%]"
+        if defined %iai_item_name% (
+            set /a "iai_i+=1"
+            goto iai_moving_to_last_item
+        )
+    
+    :iai_shifting_items_to_right
+        set /a "iai_j=%iai_i% - 1"
+        set "iai_item_name=%iai_array_name%[%iai_i%]"
+        set "iai_previous_item_name=%iai_array_name%[%iai_j%]"
+
+        if %iai_j% geq %iai_item_index% (
+            call set "%iai_item_name%=%%%iai_previous_item_name%%%"
+            set /a "iai_i-=1"
+            goto iai_shifting_items_to_right
+        )
+
+    set "%iai_array_name%[%iai_i%]=%iai_item_value%"
+exit /b %ec_success%
+
+:remove_array_item
+    set "rai_array_name=%~1"
+    set /a "rai_item_index=%~2"
+
+    set /a "rai_i=%rai_item_index%"
+    :rai_remove_loop
+        set /a "rai_j=%rai_i% + 1"
+        set "rai_item_name=%rai_array_name%[%rai_i%]"
+        set "rai_next_item_name=%rai_array_name%[%rai_j%]"
+
+        if defined %rai_item_name% (
+            call set "%rai_item_name%=%%%rai_next_item_name%%%"
+            set /a "rai_i+=1"
+            goto rai_remove_loop
+        )
 exit /b %ec_success%
 
 :repeat_string
