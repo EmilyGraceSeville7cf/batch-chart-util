@@ -112,6 +112,10 @@ exit /b %ec_success%
     echo    -v^|--version - writes version and exits
     echo    -i^|--interactive - fall in interactive mode
     echo    -w^|--width - chart item width
+    echo    -f^|--foreground - specifies --item-foreground for all chart items (user defined values take precedence)
+    echo    -b^|--background - specifies --item-background for all chart items (user defined values take precedence)
+    echo    -c^|--char - specifies --item-char for all chart items (user defined values take precedence)
+    echo    -pc^|--placeholder-char - specifies --item-placeholder-char for all chart items (user defined values take precedence)
     echo.
     echo Style options:
     echo    -if^|--item-foreground - specifies chart item foreground color
@@ -137,6 +141,7 @@ exit /b %ec_success%
     echo    - chart --help
     echo    - chart 1 5 3
     echo    - chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreground blue }
+    echo    - chart --foreground red 1 2 3
 exit /b %ec_success%
 
 :version
