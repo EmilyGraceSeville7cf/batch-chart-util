@@ -432,6 +432,10 @@ exit /b %ec_success%
     goto eso_expand_options_loop
 
 :try_draw_chart
+    set /a "tdc_ec_no_data_provided=1"
+
+    set "tdc_em_no_data_provided=No data provided to draw chart."
+
     set "tdc_data_value_array_name=%~1"
     set "tdc_data_color_array_name=%~2"
     set "tdc_data_char_array_name=%~3"
@@ -439,7 +443,10 @@ exit /b %ec_success%
     
     set "tdc_temp_file=tmp.txt"
 
-    call :find_max tdc_max "%tdc_data_value_array_name%"
+    call :find_max tdc_max "%tdc_data_value_array_name%" || (
+        echo %tdc_em_no_data_provided%
+        exit /b %tdc_ec_no_data_provided%
+    )
     
     set /a "tdc_i=0"
     :tdc_loop
@@ -705,10 +712,16 @@ exit /b %ntfcc_ec_wrong_color_name%
 exit /b %ntbcc_ec_wrong_color_name%
 
 :find_max
+    set /a "fm_ec_no_array_provided=1"
+
     set "fm_variable_name=%~1"
     set "fm_array_name=%~2"
 
-    call set /a "fm_max=%%%fm_array_name%[0]%%"
+    set "fm_item_name=%fm_array_name%[0]"
+
+    if not defined %fm_item_name% exit /b %fm_ec_no_array_provided%
+
+    call set /a "fm_max=%%%fm_item_name%%%"
 
     set /a "fm_i=1"
     :fm_max_search_loop
