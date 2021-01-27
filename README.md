@@ -12,6 +12,10 @@ chart [options] [value { [options] } [value { [options] }]...]
 - `-v`|`--version` - writes version and exits
 - `-i`|`--interactive` - fall in interactive mode
 - `-w`|`--width` - chart item width
+- `-f`|`--foreground` - specifies --item-foreground for all chart items (user defined values take precedence)
+- `-b`|`--background` - specifies --item-background for all chart items (user defined values take precedence)
+- `-c`|`--char` - specifies --item-char for all chart items (user defined values take precedence)
+- `-pc`|`--placeholder`-char - specifies --item-placeholder-char for all chart items (user defined values take precedence)
 
 Style options:
 - `if`|`--item-foreground` - specifies chart item foreground color
@@ -28,10 +32,12 @@ Interactive mode commands:
 - `0` - Success
 - `10` - bc utility not found to perform calculations with float numbers.
 - `20` - Unexpected value instead of nonnegative number.
-- `30` - Missing opening curly brace ({).
-- `31` - Missing closing curly brace (}).
-- `40` - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
-- `50` - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+- `30` - No data provided to draw chart.
+- `40` - Unexpected value instead of nonnegative number.
+- `50` - Missing opening curly brace ({).
+- `51` - Missing closing curly brace (}).
+- `60` - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+- `70` - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
 
 # Examples
 ```bat
@@ -42,4 +48,7 @@ chart 1 5 3
 ```
 ```bat
 chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreground blue }
+```
+```bat
+chart --foreground red 1 2 3
 ```
