@@ -132,10 +132,12 @@ exit /b %ec_success%
     echo    - 0 - Success
     echo    - 10 - bc utility not found to perform calculations with float numbers.
     echo    - 20 - Unexpected value instead of nonnegative number.
-    echo    - 30 - Missing opening curly brace ^({^).
-    echo    - 31 - Missing closing curly brace ^(}^).
-    echo    - 40 - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
-    echo    - 50 - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 30 - No data provided to draw chart.
+    echo    - 40 - Unexpected value instead of nonnegative number.
+    echo    - 50 - Missing opening curly brace ^({^).
+    echo    - 51 - Missing closing curly brace ^(}^).
+    echo    - 60 - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 70 - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
     echo.
     echo Examples:
     echo    - chart --help
@@ -145,7 +147,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :version
-    echo 1.0 ^(c^) 2021 year
+    echo 1.1 ^(c^) 2021 year
 exit /b %ec_success%
 
 :interactive
@@ -432,7 +434,7 @@ exit /b %ec_success%
     goto eso_expand_options_loop
 
 :try_draw_chart
-    set /a "tdc_ec_no_data_provided=1"
+    set /a "tdc_ec_no_data_provided=30"
 
     set "tdc_em_no_data_provided=No data provided to draw chart."
 
@@ -443,7 +445,7 @@ exit /b %ec_success%
     
     set "tdc_temp_file=tmp.txt"
 
-    call :find_max tdc_max "%tdc_data_value_array_name%" || (
+    call find_max.bat tdc_max "%tdc_data_value_array_name%" 2> nul > nul || (
         echo %tdc_em_no_data_provided%
         exit /b %tdc_ec_no_data_provided%
     )
@@ -472,7 +474,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :parse_chart_data
-    set /a "pcd_ec_unexpected_value=20"
+    set /a "pcd_ec_unexpected_value=40"
 
     set "pcd_em_unexpected_value=Unexpected value instead of nonnegative number."
 
@@ -526,8 +528,8 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :skip_style_block
-    set /a "ssb_ec_missing_opening_curly_brace=30"
-    set /a "ssb_ec_missing_closing_curly_brace=31"
+    set /a "ssb_ec_missing_opening_curly_brace=50"
+    set /a "ssb_ec_missing_closing_curly_brace=51"
 
     set "ssb_em_missing_opening_curly_brace=Missing opening curly brace ^({^)."
     set "ssb_em_missing_closing_curly_brace=Missing closing curly brace ^(}^)."
@@ -670,7 +672,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :name_to_foreground_color_code
-    set /a "ntfcc_ec_wrong_color_name=40"
+    set /a "ntfcc_ec_wrong_color_name=60"
 
     set "ntfcc_em_wrong_color_name=Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
@@ -691,7 +693,7 @@ exit /b %ec_success%
 exit /b %ntfcc_ec_wrong_color_name%
 
 :name_to_background_color_code
-    set /a "ntbcc_ec_wrong_color_name=50"
+    set /a "ntbcc_ec_wrong_color_name=70"
 
     set "ntbcc_em_wrong_color_name=Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
 
@@ -710,33 +712,6 @@ exit /b %ntfcc_ec_wrong_color_name%
     set /a "%ntbcc_variable_name%=0"
     echo %ntbcc_em_wrong_color_name%
 exit /b %ntbcc_ec_wrong_color_name%
-
-:find_max
-    set /a "fm_ec_no_array_provided=1"
-
-    set "fm_variable_name=%~1"
-    set "fm_array_name=%~2"
-
-    set "fm_item_name=%fm_array_name%[0]"
-
-    if not defined %fm_item_name% exit /b %fm_ec_no_array_provided%
-
-    call set /a "fm_max=%%%fm_item_name%%%"
-
-    set /a "fm_i=1"
-    :fm_max_search_loop
-        set "fm_item_name=%fm_array_name%[%fm_i%]"
-        call set "fm_item=%%%fm_array_name%[%fm_i%]%%"
-
-        if not defined %fm_item_name% (
-            set /a "%fm_variable_name%=%fm_max%"
-            exit /b %ec_success%
-        )
-
-        if %fm_item% gtr %fm_max% set /a "fm_max=%fm_item%"
-        set /a "fm_i+=1"
-        goto fm_max_search_loop
-exit /b %ec_success%
 
 :insert_array_item
     set "iai_array_name=%~1"
