@@ -1,4 +1,4 @@
-set /a "fm_ec_no_array_provided=80"
+set /a "fm_ec_no_array_provided=1"
 
 set "fm_em_no_array_provided=No array provided to calculate max item."
 

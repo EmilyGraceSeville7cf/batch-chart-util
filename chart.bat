@@ -113,7 +113,9 @@ exit /b %ec_success%
     echo    -i^|--interactive - fall in interactive mode
     echo    -w^|--width - chart item width
     echo    -f^|--foreground - specifies --item-foreground for all chart items (user defined values take precedence)
+    echo        Available value set is: black, red, green, yellow, blue, purple, cyan, white, random, random-all.
     echo    -b^|--background - specifies --item-background for all chart items (user defined values take precedence)
+    echo        Available value set is: black, red, green, yellow, blue, purple, cyan, white, random, random-all.
     echo    -c^|--char - specifies --item-char for all chart items (user defined values take precedence)
     echo    -pc^|--placeholder-char - specifies --item-placeholder-char for all chart items (user defined values take precedence)
     echo.
@@ -131,19 +133,22 @@ exit /b %ec_success%
     echo Error codes:
     echo    - 0 - Success
     echo    - 10 - bc utility not found to perform calculations with float numbers.
-    echo    - 20 - Unexpected value instead of nonnegative number.
-    echo    - 30 - No data provided to draw chart.
-    echo    - 40 - Unexpected value instead of nonnegative number.
-    echo    - 50 - Missing opening curly brace ^({^).
-    echo    - 51 - Missing closing curly brace ^(}^).
-    echo    - 60 - Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
-    echo    - 70 - Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white.
+    echo    - 20 - Unexpected value instead of nonnegative number while expanding --foreground^|--background^|--char^|--placeholder-char."
+    echo    - 30 - Unexpected value instead of nonnegative number while expanding random colors.
+    echo    - 40 - No data provided to draw chart.
+    echo    - 50 - Unexpected value instead of nonnegative number.
+    echo    - 60 - Missing opening curly brace ^({^).
+    echo    - 61 - Missing closing curly brace ^(}^).
+    echo    - 70 - Unexpected foreground color name. Valid color name set is: black (default), red, green, yellow, blue, purple, cyan, white, random.
+    echo    - 80 - Unexpected background color name. Valid color name set is: black (default), red, green, yellow, blue, purple, cyan, white, random.
     echo.
     echo Examples:
     echo    - chart --help
     echo    - chart 1 5 3
     echo    - chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreground blue }
-    echo    - chart --foreground red 1 2 3
+    echo    - chart --foreground red 1 2 3 =^> is converted to =^> chart 1 { --item-foreground red } 2 { --item-foreground red } 3 { --item-foreground red }
+    echo    - chart --foreground random 1 2 3 =^> is converted to =^> chart --foreground ^<random-color^> 1 2 3 =^> is converted to =^> chart 1 { --item-foreground ^<random-color^> } 2 { --item-foreground ^<random-color^> } 3 { --item-foreground ^<random-color^> }
+    echo    - chart --foreground random-all 1 2 3 =^> is converted to =^> chart 1 { --item-foreground ^<random-color-for-1^> } 2 { --item-foreground ^<random-color-for-2^> } 3 { --item-foreground ^<random-color-for-3^> }
 exit /b %ec_success%
 
 :version
@@ -291,12 +296,17 @@ exit /b %ec_success%
 :expand_sugar_options
     set /a "eso_ec_unexpected_value=20"
 
-    set "eso_em_unexpected_value=Unexpected value instead of nonnegative number."
+    set "eso_em_unexpected_value=Unexpected value instead of nonnegative number while expanding --foreground^|--background^|--char^|--placeholder-char."
 
     set "eso_args_array_name=%~1"
 
+    set /a "eso_temp_errorlevel=%errorlevel%"
+    if %eso_temp_errorlevel% gtr 0 exit /b %eso_temp_errorlevel%
+
     set "eso_temp_foreground_value="
     set "eso_temp_background_value="
+    set /a "eso_temp_foreground_value_is_random_for_all=%false%"
+    set /a "eso_temp_background_value_is_random_for_all=%false%"
     set "eso_temp_char_value="
     set "eso_temp_placeholder_char_value="
 
@@ -382,13 +392,27 @@ exit /b %ec_success%
 
         set /a "eso_i+=2"
 
+        set /a "eso_temp_random_foreground=0"
+        set /a "eso_temp_random_background=0"
+
+        call :random_foreground_color_code eso_temp_random_foreground
+        call :random_background_color_code eso_temp_random_background
+
         if defined eso_temp_foreground_value (
-            call :insert_array_item "%eso_args_array_name%" "%eso_temp_foreground_value%" "%eso_i%"
+            if "%eso_temp_foreground_value_is_random_for_all%" == "%true%" (
+                call :insert_array_item "%eso_args_array_name%" "%eso_temp_random_foreground%" "%eso_i%"
+            ) else (
+                call :insert_array_item "%eso_args_array_name%" "%eso_temp_foreground_value%" "%eso_i%"
+            )
             call :insert_array_item "%eso_args_array_name%" "--item-foreground" "%eso_i%"
             set /a "eso_i+=2"
         )
         if defined eso_temp_background_value (
-            call :insert_array_item "%eso_args_array_name%" "%eso_temp_background_value%" "%eso_i%"
+            if "%eso_temp_background_value_is_random_for_all%" == "%true%" (
+                call :insert_array_item "%eso_args_array_name%" "%eso_temp_random_background%" "%eso_i%"
+            ) else (
+                call :insert_array_item "%eso_args_array_name%" "%eso_temp_background_value%" "%eso_i%"
+            )
             call :insert_array_item "%eso_args_array_name%" "--item-background" "%eso_i%"
             set /a "eso_i+=2"
         )
@@ -416,25 +440,116 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :eso_if_eso_is_foreground_equal_to_true
+    if "%eso_value%" == "random-all" (
+        set /a "eso_temp_foreground_value_is_random_for_all=%true%"
+        set /a "eso_temp_foreground_value=0"
+        goto eso_remove_array_items_for_foreground_color_option
+    )
     call :to_foreground_color_code eso_temp_foreground_value "%eso_value%"
     set /a "eso_temp_errorlevel=%errorlevel%"
     if %eso_temp_errorlevel% gtr 0 exit /b %eso_temp_errorlevel%
+    set /a "eso_temp_foreground_value_is_random_for_all=%false%"
 
+    :eso_remove_array_items_for_foreground_color_option
     call :remove_array_item "%eso_args_array_name%" "%eso_i%"
     call :remove_array_item "%eso_args_array_name%" "%eso_i%"
     goto eso_expand_options_loop
 
 :eso_if_eso_is_background_equal_to_true
+    if "%eso_value%" == "random-all" (
+        set /a "eso_temp_background_value_is_random_for_all=%true%"
+        set /a "eso_temp_background_value=0"
+        goto eso_remove_array_items_for_background_color_option
+    )
     call :to_background_color_code eso_temp_background_value "%eso_value%"
     set /a "eso_temp_errorlevel=%errorlevel%"
     if %eso_temp_errorlevel% gtr 0 exit /b %eso_temp_errorlevel%
+    set /a "eso_temp_background_value_is_random_for_all=%false%"
 
+    :eso_remove_array_items_for_background_color_option
     call :remove_array_item "%eso_args_array_name%" "%eso_i%"
     call :remove_array_item "%eso_args_array_name%" "%eso_i%"
     goto eso_expand_options_loop
 
+:expand_sugar_options_random_colors
+    set /a "esorc_ec_unexpected_value=30"
+
+    set "esorc_em_unexpected_value=Unexpected value instead of nonnegative number while expanding random colors."
+
+    set "esorc_args_array_name=%~1"
+
+    set /a "esorc_i=0"
+    :esorc_expand_options_loop
+        set /a "esorc_j=%esorc_i% + 1"
+
+        if not defined %esorc_args_array_name%[%esorc_i%] exit /b %ec_success%
+
+        call set "esorc_option=%%%esorc_args_array_name%[%esorc_i%]%%"
+        call set "esorc_value=%%%esorc_args_array_name%[%esorc_j%]%%"
+
+        set /a "esorc_is_foreground_or_item_foreground=%false%"
+        if "%esorc_option%" == "-f" set /a "esorc_is_foreground_or_item_foreground=%true%"
+        if "%esorc_option%" == "--foreground" set /a "esorc_is_foreground_or_item_foreground=%true%"
+        if "%esorc_option%" == "-if" set /a "esorc_is_foreground_or_item_foreground=%true%"
+        if "%esorc_option%" == "--item-foreground" set /a "esorc_is_foreground_or_item_foreground=%true%"
+
+        if "%esorc_is_foreground_or_item_foreground%" == "%true%" (
+            if not "%esorc_value%" == "random-all" call :random_foreground_color_code "%esorc_args_array_name%[%esorc_j%]"
+
+            set /a "esorc_i+=2"
+            goto esorc_expand_options_loop
+        )
+
+        set /a "esorc_is_background_or_item_background=%false%"
+        if "%esorc_option%" == "-b" set /a "esorc_is_background_or_item_background=%true%"
+        if "%esorc_option%" == "--background" set /a "esorc_is_background_or_item_background=%true%"
+        if "%esorc_option%" == "-ib" set /a "esorc_is_background_or_item_background=%true%"
+        if "%esorc_option%" == "--item-background" set /a "esorc_is_background_or_item_background=%true%"
+
+        if "%esorc_is_background_or_item_background%" == "%true%" (
+            if not "%esorc_value%" == "random-all" call :random_background_color_code "%esorc_args_array_name%[%esorc_j%]"
+
+            set /a "esorc_i+=2"
+            goto esorc_expand_options_loop
+        )
+
+        set /a "esorc_is_skippable_option_with_value=%false%"
+        if "%esorc_option%" == "-w" set /a "esorc_is_skippable_option_with_value=%true%"
+        if "%esorc_option%" == "--width" set /a "esorc_is_skippable_option_with_value=%true%"
+
+        if "%esorc_is_skippable_option_with_value%" == "%true%" (
+            set /a "esorc_i+=2"
+            goto esorc_expand_options_loop
+        )
+
+        set /a "esorc_is_skippable_option_without_value_or_brace=%false%"
+        if "%esorc_option%" == "-h" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "--help" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "-v" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "--version" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "-i" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "--interactive" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "{" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "}" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+
+        if "%esorc_is_skippable_option_without_value_or_brace%" == "%true%" (
+            set /a "esorc_i+=1"
+            goto esorc_expand_options_loop
+        )
+
+        call set "esorc_value=%%%esorc_args_array_name%[%esorc_i%]%%"
+
+        echo %esorc_value%| findstr /r "%number_regex%" 2> nul > nul || (
+            echo %esorc_em_unexpected_value%
+            exit /b %esorc_ec_unexpected_value%
+        )
+
+        set /a "esorc_i+=1"
+        goto esorc_expand_options_loop
+exit /b %ec_success%
+
 :try_draw_chart
-    set /a "tdc_ec_no_data_provided=30"
+    set /a "tdc_ec_no_data_provided=40"
 
     set "tdc_em_no_data_provided=No data provided to draw chart."
 
@@ -474,7 +589,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :parse_chart_data
-    set /a "pcd_ec_unexpected_value=40"
+    set /a "pcd_ec_unexpected_value=50"
 
     set "pcd_em_unexpected_value=Unexpected value instead of nonnegative number."
 
@@ -528,8 +643,8 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :skip_style_block
-    set /a "ssb_ec_missing_opening_curly_brace=50"
-    set /a "ssb_ec_missing_closing_curly_brace=51"
+    set /a "ssb_ec_missing_opening_curly_brace=60"
+    set /a "ssb_ec_missing_closing_curly_brace=61"
 
     set "ssb_em_missing_opening_curly_brace=Missing opening curly brace ^({^)."
     set "ssb_em_missing_closing_curly_brace=Missing closing curly brace ^(}^)."
@@ -603,7 +718,7 @@ exit /b %ec_success%
             echo %ssb_em_missing_closing_curly_brace%
             exit /b %ssb_ec_missing_closing_curly_brace%
         )
-        
+
         call :to_color_code "%ssb_result_color_variable_name%" "%ssb_item_foreground%" "%ssb_item_background%"
         set /a "ssb_error_level=%errorlevel%"
         if %ssb_error_level% gtr 0 exit /b %ssb_error_level%
@@ -672,12 +787,14 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :name_to_foreground_color_code
-    set /a "ntfcc_ec_wrong_color_name=60"
+    set /a "ntfcc_ec_wrong_color_name=70"
 
-    set "ntfcc_em_wrong_color_name=Unexpected foreground color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
+    set "ntfcc_em_wrong_color_name=Unexpected foreground color name. Valid color name set is: black (default), red, green, yellow, blue, purple, cyan, white, random."
 
     set "ntfcc_variable_name=%~1"
     set "ntfcc_color_name=%~2"
+
+    set "ntfcc_default_color=30"
 
     if "%ntfcc_color_name%" == "black" set /a "%ntfcc_variable_name%=30" && exit /b %ec_success%
     if "%ntfcc_color_name%" == "red" set /a "%ntfcc_variable_name%=31" && exit /b %ec_success%
@@ -687,18 +804,25 @@ exit /b %ec_success%
     if "%ntfcc_color_name%" == "purple" set /a "%ntfcc_variable_name%=35" && exit /b %ec_success%
     if "%ntfcc_color_name%" == "cyan" set /a "%ntfcc_variable_name%=36" && exit /b %ec_success%
     if "%ntfcc_color_name%" == "white" set /a "%ntfcc_variable_name%=37" && exit /b %ec_success%
+    if "%ntfcc_color_name%" == "default" set /a "%ntfcc_variable_name%=%ntfcc_default_color%" && exit /b %ec_success%
+    if "%ntfcc_color_name%" == "random" (
+        call :random_foreground_color_code "%ntfcc_variable_name%"
+        exit /b %ec_success%
+    )
 
     set /a "%ntfcc_variable_name%=0"
     echo %ntfcc_em_wrong_color_name%
 exit /b %ntfcc_ec_wrong_color_name%
 
 :name_to_background_color_code
-    set /a "ntbcc_ec_wrong_color_name=70"
+    set /a "ntbcc_ec_wrong_color_name=80"
 
-    set "ntbcc_em_wrong_color_name=Unexpected background color name. Valid color name set is: black, red, green, yellow, blue, purple, cyan, white."
+    set "ntbcc_em_wrong_color_name=Unexpected background color name. Valid color name set is: black (default), red, green, yellow, blue, purple, cyan, white, random."
 
     set "ntbcc_variable_name=%~1"
     set "ntbcc_color_name=%~2"
+
+    set "ntbcc_default_color=40"
 
     if "%ntbcc_color_name%" == "black" set /a "%ntbcc_variable_name%=40" && exit /b %ec_success%
     if "%ntbcc_color_name%" == "red" set /a "%ntbcc_variable_name%=41" && exit /b %ec_success%
@@ -708,10 +832,27 @@ exit /b %ntfcc_ec_wrong_color_name%
     if "%ntbcc_color_name%" == "purple" set /a "%ntbcc_variable_name%=45" && exit /b %ec_success%
     if "%ntbcc_color_name%" == "cyan" set /a "%ntbcc_variable_name%=46" && exit /b %ec_success%
     if "%ntbcc_color_name%" == "white" set /a "%ntbcc_variable_name%=47" && exit /b %ec_success%
+    if "%ntbcc_color_name%" == "default" set /a "%ntbcc_variable_name%=%ntbcc_default_color%" && exit /b %ec_success%
+    if "%ntbcc_color_name%" == "random" (
+        call :random_background_color_code "%ntbcc_variable_name%"
+        exit /b %ec_success%
+    )
 
     set /a "%ntbcc_variable_name%=0"
     echo %ntbcc_em_wrong_color_name%
 exit /b %ntbcc_ec_wrong_color_name%
+
+:random_foreground_color_code
+    set "rfcc_variable_name=%~1"
+
+    set /a "%rfcc_variable_name%=30 + %random% %% 8"
+exit /b %ec_success%
+
+:random_background_color_code
+    set "rbcc_variable_name=%~1"
+    
+    set /a "%rbcc_variable_name%=40 + %random% %% 8"
+exit /b %ec_success%
 
 :insert_array_item
     set "iai_array_name=%~1"
