@@ -168,12 +168,12 @@ exit /b %ec_success%
         set "i_command="
         call :clear_arguments i_args
         set /p "i_command=%esc%[%i_color_code%m%i_last_errorlevel% %prompt%%esc%[0m"
+        call set i_command=%i_command%
         
         if not defined i_command goto interactive_loop
         if "%i_command: =%" == "" goto interactive_loop
         
         call :to_array i_args %i_command%
-
         set "i_first=%i_args[0]%"
         
         set "i_comment_regex=^#.*$"
