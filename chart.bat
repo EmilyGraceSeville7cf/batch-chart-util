@@ -167,6 +167,10 @@ exit /b %ec_success%
         if not %i_last_errorlevel% == 0 set /a "i_color_code=31"
         set "i_command="
         call :clear_arguments i_args
+        call :clear_arguments i_data_value
+        call :clear_arguments i_data_color
+        call :clear_arguments i_data_char
+        call :clear_arguments i_data_placeholder_char
         set /p "i_command=%esc%[%i_color_code%m%i_last_errorlevel% %prompt%%esc%[0m"
         call set i_command=%i_command%
         
