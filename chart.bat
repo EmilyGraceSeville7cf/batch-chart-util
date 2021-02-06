@@ -172,7 +172,7 @@ exit /b %ec_success%
         call :clear_arguments i_data_char
         call :clear_arguments i_data_placeholder_char
         set /p "i_command=%esc%[%i_color_code%m%i_last_errorlevel% %prompt%%esc%[0m"
-        call set i_command=%i_command%
+        call :perform_substitutions i_command "%i_command%"
         
         if not defined i_command goto interactive_loop
         if "%i_command: =%" == "" goto interactive_loop
@@ -918,6 +918,18 @@ exit /b %ec_success%
         )
 
     set "%rs_variable_name%=%rs_string_result%"
+exit /b %ec_success%
+
+:perform_substitutions
+    set "ps_variable_name=%~1"
+    set "ps_value=%~2"
+
+    :ps_substitute_loop
+        set "ps_value_before_substitution=%ps_value%"
+        call set "ps_value=%ps_value%"
+        if not "%ps_value_before_substitution%" == "%ps_value%" goto ps_substitute_loop
+    
+    set "%ps_variable_name%=%ps_value%"
 exit /b %ec_success%
 
 :set_esc
