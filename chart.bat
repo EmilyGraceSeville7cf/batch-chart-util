@@ -64,6 +64,18 @@ set /a "i=0"
         goto main_loop
     )
 
+    set /a "is_debug_mode=%false%"
+    if "%option%" == "-dm" set /a "is_debug_mode=%true%"
+    if "%option%" == "--debug-mode" set /a "is_debug_mode=%true%"
+
+    if "%is_debug_mode%" == "%true%" (
+        set /a "debug_mode=%true%"
+        set /a "i+=1"
+        goto main_loop
+    )
+
+    if "%debug_mode%" == "%true%" call :print_array args "Expansion result: "
+
     call :parse_chart_data i args data_value data_color data_char data_placeholder_char
     set /a "temp_errorlevel=%errorlevel%"
     if %temp_errorlevel% gtr 0 exit /b %temp_errorlevel%
@@ -90,6 +102,8 @@ set /a "i=0"
 
     set "default_char=-"
     set "default_placeholder_char= "
+
+    set /a "debug_mode=%false%"
 
     call :set_esc
 
@@ -118,6 +132,7 @@ exit /b %ec_success%
     echo        Available value set is: black, red, green, yellow, blue, purple, cyan, white, random, random-all.
     echo    -c^|--char - specifies --item-char for all chart items (user defined values take precedence)
     echo    -pc^|--placeholder-char - specifies --item-placeholder-char for all chart items (user defined values take precedence)
+    echo    -dm^|--debug-mode - enables debug mode
     echo.
     echo Style options:
     echo    -if^|--item-foreground - specifies chart item foreground color
@@ -165,6 +180,8 @@ exit /b %ec_success%
     :interactive_loop
         set /a "i_color_code=32"
         if not %i_last_errorlevel% == 0 set /a "i_color_code=31"
+        set /a "debug_mode=%false%"
+        set /a "width=%default_width%"
         set "i_command="
         call :clear_arguments i_args
         call :clear_arguments i_data_value
@@ -260,6 +277,18 @@ exit /b %ec_success%
                 set /a "i_i+=2"
                 goto i_main_loop
             )
+
+            set /a "i_is_debug_mode=%false%"
+            if "%i_option%" == "-dm" set /a "i_is_debug_mode=%true%"
+            if "%i_option%" == "--debug-mode" set /a "i_is_debug_mode=%true%"
+
+            if "%i_is_debug_mode%" == "%true%" (
+                set /a "debug_mode=%true%"
+                set /a "i_i+=1"
+                goto i_main_loop
+            )
+
+            if "%debug_mode%" == "%true%" call :print_array i_args "Expansion result: "
 
             call :parse_chart_data i_i i_args i_data_value i_data_color i_data_char i_data_placeholder_char
             set /a "i_temp_errorlevel=%errorlevel%"
@@ -375,6 +404,8 @@ exit /b %ec_success%
         if "%eso_option%" == "--version" set /a "eso_is_skippable_option_without_value=%true%"
         if "%eso_option%" == "-i" set /a "eso_is_skippable_option_without_value=%true%"
         if "%eso_option%" == "--interactive" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "-dm" set /a "eso_is_skippable_option_without_value=%true%"
+        if "%eso_option%" == "--debug-mode" set /a "eso_is_skippable_option_without_value=%true%"
 
         if "%eso_is_skippable_option_without_value%" == "%true%" (
             set /a "eso_i+=1"
@@ -533,6 +564,8 @@ exit /b %ec_success%
         if "%esorc_option%" == "--version" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
         if "%esorc_option%" == "-i" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
         if "%esorc_option%" == "--interactive" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "-dm" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
+        if "%esorc_option%" == "--debug-mode" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
         if "%esorc_option%" == "{" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
         if "%esorc_option%" == "}" set /a "esorc_is_skippable_option_without_value_or_brace=%true%"
 
@@ -900,6 +933,22 @@ exit /b %ec_success%
             set /a "rai_i+=1"
             goto rai_remove_loop
         )
+exit /b %ec_success%
+
+:print_array
+    set "pa_array_name=%~1"
+    set "pa_note=%~2"
+
+    echo| set /p "=%pa_note%"
+    set /a "pa_i=0"
+    :pa_print_loop
+        set "pa_item_name=%pa_array_name%[%pa_i%]"
+        if defined %pa_item_name% (
+            echo| call set /p "=%%%pa_item_name%%% "
+            set /a "pa_i+=1"
+            goto pa_print_loop
+        )
+    echo.
 exit /b %ec_success%
 
 :repeat_string
