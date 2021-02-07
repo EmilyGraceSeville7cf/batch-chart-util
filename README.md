@@ -16,6 +16,7 @@ chart [options] [value { [options] } [value { [options] }]...]
 - `-b`|`--background` - specifies --item-background for all chart items (user defined values take precedence) [Available value set is: black, red, green, yellow, blue, purple, cyan, white, random, random-all.]
 - `-c`|`--char` - specifies --item-char for all chart items (user defined values take precedence)
 - `-pc`|`--placeholder-char` - specifies --item-placeholder-char for all chart items (user defined values take precedence)
+- `-dm`|`--debug-mode` - enables debug mode
 
 Style options:
 - `if`|`--item-foreground` - specifies chart item foreground color
