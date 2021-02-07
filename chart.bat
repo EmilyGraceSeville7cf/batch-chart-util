@@ -80,6 +80,12 @@ set /a "i=0"
     set /a "temp_errorlevel=%errorlevel%"
     if %temp_errorlevel% gtr 0 exit /b %temp_errorlevel%
 
+    if "%debug_mode%" == "%true%" (
+        call :print_array data_value "Data/Values: "
+        call :print_array data_char "Data/Chars: "
+        call :print_array data_placeholder_char "Data/Placeholder chars: "
+    )
+
     call :try_draw_chart data_value data_color data_char data_placeholder_char
     set /a "temp_error_level=%errorlevel%"
     if %temp_error_level% gtr 0 exit /b %temp_error_level%
@@ -293,6 +299,12 @@ exit /b %ec_success%
             call :parse_chart_data i_i i_args i_data_value i_data_color i_data_char i_data_placeholder_char
             set /a "i_temp_errorlevel=%errorlevel%"
             if %i_temp_errorlevel% gtr 0 goto interactive_loop
+
+            if "%debug_mode%" == "%true%" (
+                call :print_array i_data_value "Data/Values: "
+                call :print_array i_data_char "Data/Chars: "
+                call :print_array i_data_placeholder_char "Data/Placeholder chars: "
+            )
 
             call :try_draw_chart i_data_value i_data_color i_data_char i_data_placeholder_char
             goto interactive_loop
@@ -944,7 +956,7 @@ exit /b %ec_success%
     :pa_print_loop
         set "pa_item_name=%pa_array_name%[%pa_i%]"
         if defined %pa_item_name% (
-            echo| call set /p "=%%%pa_item_name%%% "
+            echo| call set /p "=item-%pa_i%=[%%%pa_item_name%%%] "
             set /a "pa_i+=1"
             goto pa_print_loop
         )
