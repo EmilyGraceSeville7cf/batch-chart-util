@@ -54,3 +54,5 @@ chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreg
 ```bat
 chart --foreground red 1 2 3
 ```
+
+![usage](chart usage.gif)
