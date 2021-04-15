@@ -237,7 +237,10 @@ exit /b %ec_success%
 
         call :expand_sugar_options i_args
         set /a "i_temp_error_level=%errorlevel%"
-        if %i_temp_error_level% gtr 0 goto interactive_loop
+        if %i_temp_error_level% gtr 0 (
+            set /a "i_last_errorlevel=0"
+            goto interactive_loop
+        )
 
         set "i_previous_command=%i_command%"
 
@@ -298,7 +301,10 @@ exit /b %ec_success%
 
             call :parse_chart_data i_i i_args i_data_value i_data_color i_data_char i_data_placeholder_char
             set /a "i_temp_errorlevel=%errorlevel%"
-            if %i_temp_errorlevel% gtr 0 goto interactive_loop
+            if %i_temp_errorlevel% gtr 0 (
+                set /a "i_last_errorlevel=%i_temp_error_level%"
+                goto interactive_loop
+            )
 
             if "%debug_mode%" == "%true%" (
                 call :print_array i_data_value "Data/Values: "
@@ -307,6 +313,7 @@ exit /b %ec_success%
             )
 
             call :try_draw_chart i_data_value i_data_color i_data_char i_data_placeholder_char
+            set /a "i_last_errorlevel=0"
             goto interactive_loop
 exit /b %ec_success%
 
