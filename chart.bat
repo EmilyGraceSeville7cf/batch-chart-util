@@ -96,8 +96,10 @@ set /a "i=0"
 :init
     set /a "ec_success=0"
     set /a "ec_gawk_not_found=10"
+	set /a "ec_grep_not_found=11"
 
     set "em_gawk_not_found=gawk utility not found to perform calculations with float numbers."
+	set "em_grep_not_found=grep utility not found to perform string search."
 
     set /a "true=0"
     set /a "false=1"
@@ -121,6 +123,12 @@ set /a "i=0"
 	if %errorlevel% gtr 0 (
         echo %em_gawk_not_found%
         exit /b %ec_gawk_not_found%
+    )
+	
+    grep --version 2> nul > nul
+	if %errorlevel% gtr 0 (
+        echo %em_grep_not_found%
+        exit /b %ec_grep_not_found%
     )
 	
 	set /a "is_wine=%false%"
@@ -160,6 +168,7 @@ exit /b %ec_success%
     echo Error codes:
     echo    - 0 - Success
     echo    - 10 - gawk utility not found to perform calculations with float numbers.
+	echo    - 11 - grep utility not found to perform string search.
     echo    - 20 - Unexpected value instead of nonnegative number while expanding --foreground^|--background^|--char^|--placeholder-char."
     echo    - 30 - Unexpected value instead of nonnegative number while expanding random colors.
     echo    - 40 - No data provided to draw chart.
