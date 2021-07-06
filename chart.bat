@@ -1,5 +1,7 @@
 @echo off
-setlocal
+setlocal enableextensions
+
+set "PATH=%PATH%;C:\Program Files (x86)\GnuWin32\bin"
 
 call :init
 set /a "init_error_level=%errorlevel%"
@@ -93,9 +95,9 @@ set /a "i=0"
 
 :init
     set /a "ec_success=0"
-    set /a "ec_bc_not_found=10"
+    set /a "ec_gawk_not_found=10"
 
-    set "em_bc_not_found=bc utility not found to perform calculations with float numbers."
+    set "em_gawk_not_found=gawk utility not found to perform calculations with float numbers."
 
     set /a "true=0"
     set /a "false=1"
@@ -114,11 +116,15 @@ set /a "i=0"
     call :set_esc
 
     set "default_color_code=%esc%[0m"
-
-    bc --version 2> nul > nul || (
-        echo %em_bc_not_found%
-        exit /b %ec_bc_not_found%
+	
+    gawk --version 2> nul > nul
+	if %errorlevel% gtr 0 (
+        echo %em_gawk_not_found%
+        exit /b %ec_gawk_not_found%
     )
+	
+	set /a "is_wine=%false%"
+	if defined WINEDEBUG set /a "is_wine=%true%"
 exit /b %ec_success%
 
 :help
@@ -153,7 +159,7 @@ exit /b %ec_success%
     echo.
     echo Error codes:
     echo    - 0 - Success
-    echo    - 10 - bc utility not found to perform calculations with float numbers.
+    echo    - 10 - gawk utility not found to perform calculations with float numbers.
     echo    - 20 - Unexpected value instead of nonnegative number while expanding --foreground^|--background^|--char^|--placeholder-char."
     echo    - 30 - Unexpected value instead of nonnegative number while expanding random colors.
     echo    - 40 - No data provided to draw chart.
@@ -204,7 +210,8 @@ exit /b %ec_success%
         set "i_first=%i_args[0]%"
         
         set "i_comment_regex=^#.*$"
-        echo %i_first%| findstr /r "%i_comment_regex%" 2> nul > nul && goto interactive_loop
+        echo %i_first%| grep "%i_comment_regex%" 2> nul > nul
+		if %errorlevel% equ 0 goto interactive_loop
 
         call set "i_command=%%i_command:!!=%i_previous_command%%%"
         call :to_array i_args %i_command%
@@ -434,7 +441,9 @@ exit /b %ec_success%
         call set "eso_value=%%%eso_args_array_name%[%eso_i%]%%"
         call set "eso_next_argument=%%%eso_args_array_name%[%eso_j%]%%"
 
-        echo %eso_value%| findstr /r "%number_regex%" 2> nul > nul || (
+        echo %eso_value%| grep "%number_regex%" 2> nul > nul
+		if %errorlevel% gtr 0 (
+			echo %eso_value%
             echo %eso_em_unexpected_value%
             exit /b %eso_ec_unexpected_value%
         )
@@ -484,6 +493,7 @@ exit /b %ec_success%
         :eso_move_to_closing_brace
             call set "eso_argument=%%%eso_args_array_name%[%eso_i%]%%"
             if not defined eso_argument exit /b %ec_success%
+			echo| pause > nul
             if not "%eso_argument%" == "}" (
                 set /a "eso_i+=1"
                 goto eso_move_to_closing_brace
@@ -595,7 +605,8 @@ exit /b %ec_success%
 
         call set "esorc_value=%%%esorc_args_array_name%[%esorc_i%]%%"
 
-        echo %esorc_value%| findstr /r "%number_regex%" 2> nul > nul || (
+        echo %esorc_value%| grep "%number_regex%" 2> nul > nul
+		if %errorlevel% gtr 0 (
             echo %esorc_em_unexpected_value%
             exit /b %esorc_ec_unexpected_value%
         )
@@ -616,11 +627,12 @@ exit /b %ec_success%
     
     set "tdc_temp_file=tmp.txt"
 
-    call find_max.bat tdc_max "%tdc_data_value_array_name%" 2> nul > nul || (
+    call find_max.bat tdc_max "%tdc_data_value_array_name%" 2> nul > nul
+	if "%errorlevel%" gtr 0 (
         echo %tdc_em_no_data_provided%
         exit /b %tdc_ec_no_data_provided%
     )
-    
+	
     set /a "tdc_i=0"
     :tdc_loop
         call set "tdc_value=%%%tdc_data_value_array_name%[%tdc_i%]%%"
@@ -630,7 +642,7 @@ exit /b %ec_success%
 
         if not defined tdc_value exit /b %ec_success%
 
-        echo scale=5; part=%tdc_value%/%tdc_max%*%width%; scale=0; part / 1 | bc > "%tdc_temp_file%"
+		gawk -f calculate.awk %tdc_value% %tdc_max% %width% > "%tdc_temp_file%"
 
         set /p tdc_item_length=<%tdc_temp_file%
         set /a "tdc_space_count=%width% - %tdc_item_length%"
@@ -638,7 +650,11 @@ exit /b %ec_success%
         call :repeat_string tdc_item "%tdc_char%" "%tdc_item_length%"
         call :repeat_string tdc_space "%tdc_placeholder_char%" "%tdc_space_count%"
 
-        echo %tdc_color%%tdc_item%%tdc_space% %tdc_value%%esc%[0m
+		if "%is_wine%" == "%false%" (
+			echo %tdc_color%%tdc_item%%tdc_space% %tdc_value%%esc%[0m
+		) else (
+			echo %tdc_item%%tdc_space% %tdc_value%
+		)
 
         set /a "tdc_i+=1"
         goto tdc_loop
@@ -665,7 +681,8 @@ exit /b %ec_success%
 
         if not defined %pcd_args_array_name%[%pcd_i%] exit /b %ec_success%
 
-        echo %pcd_value%| findstr /r "%number_regex%" 2> nul > nul || (
+        echo %pcd_value%| grep "%number_regex%" 2> nul > nul
+		if %errorlevel% gtr 0 (
             echo %pcd_em_unexpected_value%
             exit /b %pcd_ec_unexpected_value%
         )
@@ -690,7 +707,7 @@ exit /b %ec_success%
         call :skip_style_block pcd_i pcd_color pcd_char pcd_placeholder_char "%pcd_args_array_name%"
         set /a "pcd_temp_errorlevel=%errorlevel%"
         if %pcd_temp_errorlevel% gtr 0 exit /b %pcd_temp_errorlevel%
-        
+
         set "%pcd_data_color_array_name%[%pcd_data_i%]=%pcd_color%"
         set "%pcd_data_char_array_name%[%pcd_data_i%]=%pcd_char%"
         set "%pcd_data_placeholder_char_array_name%[%pcd_data_i%]=%pcd_placeholder_char%"
@@ -818,7 +835,8 @@ exit /b %ec_success%
     set "tfcc_variable_name=%~1"
     set "tfcc_color=%~2"
 
-    echo %tfcc_color%| findstr /r "%number_regex%" 2> nul > nul && (
+    echo %tfcc_color%| grep "%number_regex%" 2> nul > nul
+	if %errorlevel% equ 0 (
         set "%tfcc_variable_name%=%tfcc_color%"
         exit /b %ec_success%
     )
@@ -832,7 +850,8 @@ exit /b %ec_success%
     set "tbcc_variable_name=%~1"
     set "tbcc_color=%~2"
 
-    echo %tbcc_color%| findstr /r "%number_regex%" 2> nul > nul && (
+    echo %tbcc_color%| grep "%number_regex%" 2> nul > nul
+	if %errorlevel% equ 0 (
         set "%tbcc_variable_name%=%tbcc_color%"
         exit /b %ec_success%
     )
@@ -852,15 +871,42 @@ exit /b %ec_success%
 
     set "ntfcc_default_color=30"
 
-    if "%ntfcc_color_name%" == "black" set /a "%ntfcc_variable_name%=30" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "red" set /a "%ntfcc_variable_name%=31" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "green" set /a "%ntfcc_variable_name%=32" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "yellow" set /a "%ntfcc_variable_name%=33" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "blue" set /a "%ntfcc_variable_name%=34" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "purple" set /a "%ntfcc_variable_name%=35" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "cyan" set /a "%ntfcc_variable_name%=36" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "white" set /a "%ntfcc_variable_name%=37" && exit /b %ec_success%
-    if "%ntfcc_color_name%" == "default" set /a "%ntfcc_variable_name%=%ntfcc_default_color%" && exit /b %ec_success%
+    if "%ntfcc_color_name%" == "black" (
+		set /a "%ntfcc_variable_name%=30"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "red" (
+		set "%ntfcc_variable_name%=31"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "green" (
+		set /a "%ntfcc_variable_name%=32"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "yellow" (
+		set /a "%ntfcc_variable_name%=33"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "blue" (
+		set /a "%ntfcc_variable_name%=34"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "purple" (
+		set /a "%ntfcc_variable_name%=35"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "cyan" (
+		set /a "%ntfcc_variable_name%=36"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "white" (
+		set /a "%ntfcc_variable_name%=37"
+		exit /b %ec_success%
+	)
+    if "%ntfcc_color_name%" == "default" (
+		set /a "%ntfcc_variable_name%=%ntfcc_default_color%"
+		exit /b %ec_success%
+	)
     if "%ntfcc_color_name%" == "random" (
         call :random_foreground_color_code "%ntfcc_variable_name%"
         exit /b %ec_success%
@@ -880,15 +926,42 @@ exit /b %ntfcc_ec_wrong_color_name%
 
     set "ntbcc_default_color=40"
 
-    if "%ntbcc_color_name%" == "black" set /a "%ntbcc_variable_name%=40" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "red" set /a "%ntbcc_variable_name%=41" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "green" set /a "%ntbcc_variable_name%=42" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "yellow" set /a "%ntbcc_variable_name%=43" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "blue" set /a "%ntbcc_variable_name%=44" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "purple" set /a "%ntbcc_variable_name%=45" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "cyan" set /a "%ntbcc_variable_name%=46" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "white" set /a "%ntbcc_variable_name%=47" && exit /b %ec_success%
-    if "%ntbcc_color_name%" == "default" set /a "%ntbcc_variable_name%=%ntbcc_default_color%" && exit /b %ec_success%
+    if "%ntbcc_color_name%" == "black" (
+		set /a "%ntbcc_variable_name%=40"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "red" (
+		set /a "%ntbcc_variable_name%=41"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "green" (
+		set /a "%ntbcc_variable_name%=42"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "yellow" (
+		set /a "%ntbcc_variable_name%=43"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "blue" (
+		set /a "%ntbcc_color_name%=44"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "purple" (
+		set /a "%ntbcc_variable_name%=45"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "cyan" (
+		set /a "%ntbcc_variable_name%=46"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "white" (
+		set /a "%ntbcc_variable_name%=47"
+		exit /b %ec_success%
+	)
+    if "%ntbcc_color_name%" == "default" (
+		set /a "%ntbcc_variable_name%=%ntbcc_default_color%"
+		exit /b %ec_success%
+	)
     if "%ntbcc_color_name%" == "random" (
         call :random_background_color_code "%ntbcc_variable_name%"
         exit /b %ec_success%
