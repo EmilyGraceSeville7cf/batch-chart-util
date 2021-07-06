@@ -209,7 +209,12 @@ exit /b %ec_success%
         call :clear_arguments i_data_color
         call :clear_arguments i_data_char
         call :clear_arguments i_data_placeholder_char
-        set /p "i_command=%esc%[%i_color_code%m%i_last_errorlevel% %prompt%%esc%[0m"
+		
+		if "%is_wine%" == "%false%" (
+			set /p "i_command=%esc%[%i_color_code%m%i_last_errorlevel% %prompt%%esc%[0m"
+		) else (
+			set /p "i_command=%i_last_errorlevel% %prompt%"
+		)
         call :perform_substitutions i_command "%i_command%"
         
         if not defined i_command goto interactive_loop
