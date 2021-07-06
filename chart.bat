@@ -1,8 +1,6 @@
 @echo off
 setlocal enableextensions
 
-set "PATH=%PATH%;C:\Program Files (x86)\GnuWin32\bin"
-
 call :init
 set /a "init_error_level=%errorlevel%"
 if %init_error_level% gtr 0 exit /b %init_error_level%
@@ -118,6 +116,9 @@ set /a "i=0"
     call :set_esc
 
     set "default_color_code=%esc%[0m"
+	
+	set "gnu_path=C:\Program Files (x86)\GnuWin32\bin"
+	set "PATH=%PATH%;%gnu_path%"
 	
     gawk --version 2> nul > nul
 	if %errorlevel% gtr 0 (
