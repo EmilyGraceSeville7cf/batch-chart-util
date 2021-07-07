@@ -78,4 +78,12 @@ chart 1 { --item-foreground red } 5 { --item-foreground green } 3 { --item-foreg
 chart --foreground red 1 2 3
 ```
 
+```bat
+chart --foreground random 1 2 3
+```
+
+```bat
+chart --foreground random-all 1 2 3
+```
+
 ![usage](chart usage.gif)
