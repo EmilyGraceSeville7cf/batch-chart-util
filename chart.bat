@@ -117,13 +117,13 @@ set /a "i=0"
 
     set "default_color_code=%esc%[0m"
 	
-	set "gnu_path=C:\Program Files (x86)\GnuWin32\bin"
-	set "PATH=%gnu_path%;%PATH%"
-	
 	set /a "is_wine=%false%"
 	if defined WINEDEBUG set /a "is_wine=%true%"
 	
 	if "%is_wine%" == "%false%" exit /b %ec_success%
+	
+	set "gnu_path=C:\Program Files (x86)\GnuWin32\bin"
+	set "PATH=%gnu_path%;%PATH%"
 	
     gawk --version 2> nul > nul
 	if %errorlevel% gtr 0 (
