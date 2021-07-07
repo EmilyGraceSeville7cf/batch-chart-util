@@ -120,6 +120,11 @@ set /a "i=0"
 	set "gnu_path=C:\Program Files (x86)\GnuWin32\bin"
 	set "PATH=%gnu_path%;%PATH%"
 	
+	set /a "is_wine=%false%"
+	if defined WINEDEBUG set /a "is_wine=%true%"
+	
+	if "%is_wine%" == "%false%" exit /b %ec_success%
+	
     gawk --version 2> nul > nul
 	if %errorlevel% gtr 0 (
         echo %em_gawk_not_found%
@@ -131,9 +136,6 @@ set /a "i=0"
         echo %em_grep_not_found%
         exit /b %ec_grep_not_found%
     )
-	
-	set /a "is_wine=%false%"
-	if defined WINEDEBUG set /a "is_wine=%true%"
 exit /b %ec_success%
 
 :help
@@ -168,8 +170,8 @@ exit /b %ec_success%
     echo.
     echo Error codes:
     echo    - 0 - Success
-    echo    - 10 - gawk utility not found to perform calculations with float numbers.
-	echo    - 11 - grep utility not found to perform string search.
+    echo    - 10 - gawk utility not found to perform calculations with float numbers. [gawk is only required in Wine]
+	echo    - 11 - grep utility not found to perform string search. [grep is only required in Wine]
     echo    - 20 - Unexpected value instead of nonnegative number while expanding --foreground^|--background^|--char^|--placeholder-char."
     echo    - 30 - Unexpected value instead of nonnegative number while expanding random colors.
     echo    - 40 - No data provided to draw chart.
@@ -225,7 +227,7 @@ exit /b %ec_success%
         set "i_first=%i_args[0]%"
         
         set "i_comment_regex=^#.*$"
-        echo %i_first%| grep "%i_comment_regex%" 2> nul > nul
+		call :match_string "%i_first%" "%i_comment_regex%"
 		if %errorlevel% equ 0 goto interactive_loop
 
         call set "i_command=%%i_command:!!=%i_previous_command%%%"
@@ -456,7 +458,7 @@ exit /b %ec_success%
         call set "eso_value=%%%eso_args_array_name%[%eso_i%]%%"
         call set "eso_next_argument=%%%eso_args_array_name%[%eso_j%]%%"
 
-        echo %eso_value%| grep "%number_regex%" 2> nul > nul
+		call :match_string "%eso_value%" "%number_regex%"
 		if %errorlevel% gtr 0 (
 			echo %eso_value%
             echo %eso_em_unexpected_value%
@@ -620,7 +622,7 @@ exit /b %ec_success%
 
         call set "esorc_value=%%%esorc_args_array_name%[%esorc_i%]%%"
 
-        echo %esorc_value%| grep "%number_regex%" 2> nul > nul
+		call :match_string "%esorc_value%" "%number_regex%"
 		if %errorlevel% gtr 0 (
             echo %esorc_em_unexpected_value%
             exit /b %esorc_ec_unexpected_value%
@@ -657,7 +659,12 @@ exit /b %ec_success%
 
         if not defined tdc_value exit /b %ec_success%
 
-		gawk -f calculate.awk %tdc_value% %tdc_max% %width% > "%tdc_temp_file%"
+		echo| pause > nul
+		if "%is_wine%" == "%false%" (
+			powershell -Command  "%tdc_value%/%tdc_max%*%width%" > "%tdc_temp_file%"
+		) else (
+			gawk -f calculate.awk %tdc_value% %tdc_max% %width% > "%tdc_temp_file%"
+		)
 
         set /p tdc_item_length=<%tdc_temp_file%
         set /a "tdc_space_count=%width% - %tdc_item_length%"
@@ -696,7 +703,7 @@ exit /b %ec_success%
 
         if not defined %pcd_args_array_name%[%pcd_i%] exit /b %ec_success%
 
-        echo %pcd_value%| grep "%number_regex%" 2> nul > nul
+		call :match_string "%pcd_value%" "%number_regex%"
 		if %errorlevel% gtr 0 (
             echo %pcd_em_unexpected_value%
             exit /b %pcd_ec_unexpected_value%
@@ -850,7 +857,7 @@ exit /b %ec_success%
     set "tfcc_variable_name=%~1"
     set "tfcc_color=%~2"
 
-    echo %tfcc_color%| grep "%number_regex%" 2> nul > nul
+	call :match_string "%tfcc_color%" "%number_regex%"
 	if %errorlevel% equ 0 (
         set "%tfcc_variable_name%=%tfcc_color%"
         exit /b %ec_success%
@@ -865,7 +872,7 @@ exit /b %ec_success%
     set "tbcc_variable_name=%~1"
     set "tbcc_color=%~2"
 
-    echo %tbcc_color%| grep "%number_regex%" 2> nul > nul
+	call :match_string "%tbcc_color%" "%number_regex%"
 	if %errorlevel% equ 0 (
         set "%tbcc_variable_name%=%tbcc_color%"
         exit /b %ec_success%
@@ -1086,6 +1093,24 @@ exit /b %ec_success%
         if not "%ps_value_before_substitution%" == "%ps_value%" goto ps_substitute_loop
     
     set "%ps_variable_name%=%ps_value%"
+exit /b %ec_success%
+
+:match_string
+    set "ms_value=%~1"
+    set "ms_regex=%~2"
+	
+	if "%is_wine%" == "%false%" (
+		goto ms_windows_match
+	) else (
+		goto ms_wine_match
+	)
+	
+	:ms_windows_match
+		echo %ms_value%| findstr /r "%ms_regex%" 2> nul > nul
+		exit /b %errorlevel%
+	:ms_wine_match
+		echo %ms_value%| grep "%ms_regex%" 2> nul > nul
+		exit /b %errorlevel%
 exit /b %ec_success%
 
 :set_esc

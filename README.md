@@ -8,7 +8,7 @@ simple chart drawer.
 
 Supported environments: Windows 10 and Wine 5.0. Note that coloring on Wine doesn't work.
 
-Command line utils pre-installed:
+Command line utils pre-installed (only in Wine):
 
 - [gawk](http://gnuwin32.sourceforge.net/packages/gawk.htm)
 - [grep](http://gnuwin32.sourceforge.net/packages/grep.htm)
@@ -49,8 +49,8 @@ Interactive mode commands:
 ## Error codes
 
 - `0` - Success
-- `10` - gawk utility not found to perform calculations with float numbers.
-- `11` - grep utility not found to perform string search.
+- `10` - gawk utility not found to perform calculations with float numbers. [gawk is only required in Wine]
+- `11` - grep utility not found to perform string search. [grep is only required in Wine]
 - `20` - Unexpected value instead of nonnegative number while expanding --foreground|--background|--char|--placeholder-char."
 - `30` - Unexpected value instead of nonnegative number while expanding random colors.
 - `40` - No data provided to draw chart.
