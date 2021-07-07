@@ -118,7 +118,7 @@ set /a "i=0"
     set "default_color_code=%esc%[0m"
 	
 	set "gnu_path=C:\Program Files (x86)\GnuWin32\bin"
-	set "PATH=%PATH%;%gnu_path%"
+	set "PATH=%gnu_path%;%PATH%"
 	
     gawk --version 2> nul > nul
 	if %errorlevel% gtr 0 (
