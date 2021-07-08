@@ -193,7 +193,7 @@ exit /b %ec_success%
 exit /b %ec_success%
 
 :version
-    echo 1.1 ^(c^) 2021 year
+    echo 2.0 ^(c^) 2021 year
 exit /b %ec_success%
 
 :interactive
