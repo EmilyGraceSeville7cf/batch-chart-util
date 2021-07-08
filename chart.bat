@@ -663,7 +663,7 @@ exit /b %ec_success%
 
 		echo| pause > nul
 		if "%is_wine%" == "%false%" (
-			powershell -Command  "%tdc_value%/%tdc_max%*%width%" > "%tdc_temp_file%"
+			powershell -Command  "[math]::Floor(%tdc_value%/%tdc_max%*%width%)" > "%tdc_temp_file%"
 		) else (
 			gawk -f calculate.awk %tdc_value% %tdc_max% %width% > "%tdc_temp_file%"
 		)
