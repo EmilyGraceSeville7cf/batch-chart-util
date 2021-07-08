@@ -1068,19 +1068,23 @@ exit /b %ec_success%
 :repeat_string
     set "rs_variable_name=%~1"
     set "rs_string=%~2"
-    set "rs_count=%~3"
+    set /a "rs_count=%~3"
 
-    set /a "rs_i=0"
-    set "rs_string_result="
+	if %rs_count% lss 1 (
+		set "%rs_variable_name%="
+		exit /b %ec_success%
+	)
 
-    :rs_repetition_loop
-        if %rs_i% lss %rs_count% (
-            set "rs_string_result=%rs_string_result%%rs_string%"
-            set /a "rs_i+=1"
-            goto rs_repetition_loop
-        )
-
-    set "%rs_variable_name%=%rs_string_result%"
+	set /a "rs_actual_count=1"
+	
+	:rs_repetition_loop
+		if %rs_actual_count% lss %rs_count% (
+			set "rs_string=%rs_string%%rs_string%"
+			set /a "rs_actual_count=%rs_actual_count% * 2"
+			goto rs_repetition_loop
+		)
+	
+	call set "%rs_variable_name%=%%rs_string:~0,%rs_count%%%"
 exit /b %ec_success%
 
 :perform_substitutions
