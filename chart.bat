@@ -76,6 +76,7 @@ set /a "i=0"
 
     if "%debug_mode%" == "%true%" call :print_array args "Expansion result: "
 
+	if "%debug_mode%" == "%true%" echo Parsing input data... [stderr stream] >&2
     call :parse_chart_data i args data_value data_color data_char data_placeholder_char
     set /a "temp_errorlevel=%errorlevel%"
     if %temp_errorlevel% gtr 0 exit /b %temp_errorlevel%
@@ -86,6 +87,7 @@ set /a "i=0"
         call :print_array data_placeholder_char "Data/Placeholder chars: "
     )
 
+	if "%debug_mode%" == "%true%" echo Rendering chart... [stderr stream] >&2
     call :try_draw_chart data_value data_color data_char data_placeholder_char
     set /a "temp_error_level=%errorlevel%"
     if %temp_error_level% gtr 0 exit /b %temp_error_level%
@@ -1053,16 +1055,16 @@ exit /b %ec_success%
     set "pa_array_name=%~1"
     set "pa_note=%~2"
 
-    echo| set /p "=%pa_note%"
+    echo| set /p "=%pa_note%" >&2
     set /a "pa_i=0"
     :pa_print_loop
         set "pa_item_name=%pa_array_name%[%pa_i%]"
         if defined %pa_item_name% (
-            echo| call set /p "=item-%pa_i%=[%%%pa_item_name%%%] "
+            echo| call set /p "=item-%pa_i%=[%%%pa_item_name%%%] " >&2
             set /a "pa_i+=1"
             goto pa_print_loop
         )
-    echo.
+    echo [stderr stream] >&2
 exit /b %ec_success%
 
 :repeat_string
