@@ -1,8 +1,8 @@
-# chart
+# Chart drawer
 
 ## Description
 
-simple chart drawer.
+Tool to draw horizontal colorful charts in console.
 
 ## Requirements
 
