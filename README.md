@@ -2,6 +2,8 @@
 
 ## Description
 
+> ⚠️ This project is no longer maintained.
+
 Tool to draw horizontal colorful charts in console.
 
 ## Requirements
